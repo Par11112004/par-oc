@@ -1,0 +1,98 @@
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.*;
+import javafx.geometry.*;
+
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.BufferedReader;
+import org.json.JSONObject;
+
+public class WeatherDashboard extends Application {
+    
+    private static final String API_KEY = "YOUR_API_KEY"; // Replace with your API Key
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        // Set up the UI elements
+        primaryStage.setTitle("Weather Dashboard");
+
+        // Create TextField for city input
+        TextField cityInput = new TextField();
+        cityInput.setPromptText("Enter city name");
+
+        // Create Button to get weather data
+        Button getWeatherButton = new Button("Get Weather");
+
+        // Create Labels to display weather data
+        Label cityNameLabel = new Label();
+        Label temperatureLabel = new Label();
+        Label descriptionLabel = new Label();
+        Label humidityLabel = new Label();
+        Label windSpeedLabel = new Label();
+
+        // Create a VBox to organize the UI elements vertically
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(20));
+        vbox.setAlignment(Pos.CENTER);
+        vbox.getChildren().addAll(
+                cityInput,
+                getWeatherButton,
+                cityNameLabel,
+                temperatureLabel,
+                descriptionLabel,
+                humidityLabel,
+                windSpeedLabel
+        );
+
+        // Button click action to fetch weather data
+        getWeatherButton.setOnAction(event -> {
+            String city = cityInput.getText().trim();
+            if (!city.isEmpty()) {
+                getWeatherData(city, cityNameLabel, temperatureLabel, descriptionLabel, humidityLabel, windSpeedLabel);
+            } else {
+                showAlert("Please enter a valid city name.");
+            }
+        });
+
+        // Create Scene and set it on the stage
+        Scene scene = new Scene(vbox, 300, 400);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void getWeatherData(String city, Label cityNameLabel, Label temperatureLabel, Label descriptionLabel, Label humidityLabel, Label windSpeedLabel) {
+        try {
+            // Create the URL for the OpenWeatherMap API
+            String urlString = String.format("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric", city, API_KEY);
+            URL url = new URL(urlString);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+
+            // Read the response
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+
+            // Parse the JSON response
+            JSONObject jsonResponse = new JSONObject(response.toString());
+
+            // Extract weather data from JSON response
+            String cityName = jsonResponse.getString("name");
+            double temp = jsonResponse.getJSONObject("main").getDouble("temp");
+            String description = jsonResponse.getJSONArray("weather").getJSONObject(0).getString("description");
+            int humidity = jsonResponse.getJSONObject("main").getInt("humidity");
+            double w
